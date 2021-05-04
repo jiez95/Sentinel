@@ -117,6 +117,14 @@ public class ContextUtil {
         return trueEnter(name, origin);
     }
 
+    /**
+     * sentinel_default_context
+     * ""
+     *
+     * @param name
+     * @param origin
+     * @return
+     */
     protected static Context trueEnter(String name, String origin) {
         Context context = contextHolder.get();
         if (context == null) {

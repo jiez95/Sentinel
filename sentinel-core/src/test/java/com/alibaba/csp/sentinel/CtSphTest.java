@@ -13,9 +13,16 @@ import com.alibaba.csp.sentinel.slotchain.SlotChainProvider;
 import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRuleManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +35,60 @@ import static org.mockito.Mockito.*;
 public class CtSphTest {
 
     private final CtSph ctSph = new CtSph();
+
+    @Test
+    public void testDefaultContextEntryWithBusinessException() {
+        /**
+         * app: "sentinel-dashboard"
+         * count: 1
+         * grade: "2"
+         * ip: "192.168.31.156"
+         * limitApp: "default"
+         * minRequestAmount: 5
+         * port: "8719"
+         * resource: "test"
+         * statIntervalMs: 1000
+         * timeWindow: 10
+         */
+        List<DegradeRule> rules = new ArrayList<>();
+        DegradeRule degradeRule = new DegradeRule();
+        degradeRule.setResource("test");
+        degradeRule.setLimitApp("default");
+        degradeRule.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_COUNT);
+        degradeRule.setCount(1);
+        degradeRule.setMinRequestAmount(1);
+        degradeRule.setStatIntervalMs(1000);
+        degradeRule.setTimeWindow(10);
+        rules.add(degradeRule);
+        DegradeRuleManager.loadRules(rules);
+
+        AtomicInteger count = new AtomicInteger();
+        while (count.get() <= 50000) {
+            try {
+                doBusinessLogic();
+            } catch (Exception e) {
+            }
+        }
+        System.out.println("结束了");
+    }
+
+    private void doBusinessLogic(){
+        Entry entry = null;
+        try {
+            entry = ctSph.entry("test", EntryType.IN, 1);
+        } catch (BlockException ex) {
+            System.out.println("断路了");
+            fail("Unexpected blocked: " + ex.getClass().getCanonicalName());
+        } catch (Exception e) {
+            entry.setError(e);
+        } finally {
+            第二个资源访问
+                    /test -> /test/a
+//            if (entry != null) {
+//                entry.exit();
+//            }
+        }
+    }
 
     private void testCustomContextEntryWithFullContextSize(String resourceName, boolean async) {
         fillFullContext();

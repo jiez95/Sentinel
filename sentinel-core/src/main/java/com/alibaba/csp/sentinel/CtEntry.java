@@ -90,6 +90,12 @@ class CtEntry extends Entry {
                 return;
             }
 
+            /**
+             * 异常退出
+             * 如果不是从 访问树 的叶子节点 开始退出,
+             *      Sentinel会把从叶子节点开始把整棵访问树进行退出操作
+             *      全部退出后，抛出ErrorEntryFreeException异常
+             */
             if (context.getCurEntry() != this) {
                 String curEntryNameInContext = context.getCurEntry() == null ? null
                     : context.getCurEntry().getResourceWrapper().getName();
@@ -103,19 +109,35 @@ class CtEntry extends Entry {
                         + ", current entry in context: <%s>, but expected: <%s>", curEntryNameInContext,
                     resourceWrapper.getName());
                 throw new ErrorEntryFreeException(errorMessage);
-            } else {
+            }
+            // 正常退出
+            else {
                 // Go through the onExit hook of all slots.
+                // 执行 责任槽 退出
                 if (chain != null) {
                     chain.exit(context, resourceWrapper, count, args);
                 }
                 // Go through the existing terminate handlers (associated to this invocation).
+                // 回调退出处理器（BiConsumer接口实现类）
                 callExitHandlersAndCleanUp(context);
 
                 // Restore the call stack.
+                // 本节点已经退出完成了，那么 当前Context 的 最新节点 应该 本节点的父节点
                 context.setCurEntry(parent);
+                /**
+                 * 如果还没有到最顶层，因为本节点已经退出完成了，因此取消 本节点的父节点 与本节点的关系
+                 */
                 if (parent != null) {
                     ((CtEntry) parent).child = null;
                 }
+                // 如果已经退出到最顶层了，就把 当前Context 取消与当前线程绑定了
+                /**
+                 * 这里有个坑
+                 *  如果已经退出到最顶层了 且 当前Context是默认Context
+                 *      就把 当前Context 取消与当前线程绑定了
+                 *
+                 * 代表如果是自定义的Context需要手动释放Context
+                 */
                 if (parent == null) {
                     // Default context (auto entered) will be exited automatically.
                     if (ContextUtil.isDefaultContext(context)) {

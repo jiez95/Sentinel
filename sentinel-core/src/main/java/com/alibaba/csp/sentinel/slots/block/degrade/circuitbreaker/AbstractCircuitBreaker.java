@@ -67,13 +67,26 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     @Override
     public boolean tryPass(Context context) {
         // Template implementation.
+        // 如果是CLOSE状态，直接通过
         if (currentState.get() == State.CLOSED) {
             return true;
         }
+        /**
+         * 如果当前断路器是开启状态
+         *  判断是否已经过了熔断时长
+         *      1. 超时熔断时长
+         *          尝试把当前断路器状态修改为半开状态，修改成功则通过，修改失败(说明有并发请求)则不通过
+         *      2. 未超过熔断时长
+         *          不通过
+         */
         if (currentState.get() == State.OPEN) {
             // For half-open state we allow a request for probing.
             return retryTimeoutArrived() && fromOpenToHalfOpen(context);
         }
+        /**
+         * 如果已经是半开状态了，后续其他请求继续熔断
+         *  这里就是实现 超时熔断时长后 允许一条线程请求 去尝试调用真实逻辑 看是否能够成功
+         */
         return false;
     }
 

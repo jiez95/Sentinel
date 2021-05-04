@@ -51,6 +51,9 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             return;
         }
         for (CircuitBreaker cb : circuitBreakers) {
+            /**
+             * 通过 熔断器状态 判断 是否需要直接熔断降级
+             */
             if (!cb.tryPass(context)) {
                 throw new DegradeException(cb.getRule().getLimitApp(), cb.getRule());
             }
@@ -60,10 +63,12 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     @Override
     public void exit(Context context, ResourceWrapper r, int count, Object... args) {
         Entry curEntry = context.getCurEntry();
+        // curEntry.getBlockError这里记录的是拦截异常
         if (curEntry.getBlockError() != null) {
             fireExit(context, r, count, args);
             return;
         }
+        // 根据资源名获取对应的全部断路器
         List<CircuitBreaker> circuitBreakers = DegradeRuleManager.getCircuitBreakers(r.getName());
         if (circuitBreakers == null || circuitBreakers.isEmpty()) {
             fireExit(context, r, count, args);
@@ -72,6 +77,7 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
         if (curEntry.getBlockError() == null) {
             // passed request
+            // 维护断路器状态
             for (CircuitBreaker circuitBreaker : circuitBreakers) {
                 circuitBreaker.onRequestComplete(context);
             }
