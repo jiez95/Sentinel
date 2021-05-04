@@ -7,6 +7,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.alibaba.csp/sentinel-core.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.alibaba.csp%20AND%20a:sentinel-core)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Gitter](https://badges.gitter.im/alibaba/Sentinel.svg)](https://gitter.im/alibaba/Sentinel)
+[![Maintainability](https://cloud.quality-gate.com/dashboard/api/badge?projectName=alibaba_Sentinel&branchName=master)](https://cloud.quality-gate.com/dashboard/branches/7825#overview)
 
 ## Introduction
 
@@ -27,6 +28,8 @@ Features overview:
 ![features-of-sentinel](./doc/image/sentinel-features-overview-en.png)
 
 ## Documentation
+
+See the [Sentinel](https://sentinelguard.io/) for the document website.
 
 See the [中文文档](https://github.com/alibaba/Sentinel/wiki/%E4%BB%8B%E7%BB%8D) for document in Chinese.
 
@@ -49,16 +52,16 @@ Below is a simple demo that guides new users to use Sentinel in just 3 steps. It
 
 ### 1. Add Dependency
 
-**Note:** Sentinel Core requires Java 7 or later.
+**Note:** Sentinel requires JDK 1.8 or later.
 
-If your're using Maven, just add the following dependency in `pom.xml`.
+If you're using Maven, just add the following dependency in `pom.xml`.
 
 ```xml
 <!-- replace here with the latest version -->
 <dependency>
     <groupId>com.alibaba.csp</groupId>
     <artifactId>sentinel-core</artifactId>
-    <version>1.7.2</version>
+    <version>1.8.1</version>
 </dependency>
 ```
 
@@ -113,7 +116,7 @@ After running the demo for a while, you can see the following records in `~/logs
 1529998908000|2018-06-26 15:41:48|HelloWorld|20|19502|20|0|0   |0
 1529998909000|2018-06-26 15:41:49|HelloWorld|20|18386|20|0|0   |0
 
-p stands for incoming request, block for blocked by rules, success for success handled by Sentinel, e for exception count, rt for average response time (ms), occupied stands for occupiedPassQps since 1.5.0 which enable us booking more than 1 shot when entering.
+p stands for incoming request, block for blocked by rules, s for success handled by Sentinel, e for exception count, rt for average response time (ms), occupied stands for occupiedPassQps since 1.5.0 which enable us booking more than 1 shot when entering.
 ```
 
 This shows that the demo can print "hello world" 20 times per second.
@@ -163,15 +166,17 @@ These are only part of the companies using Sentinel, for reference only.
 If you are using Sentinel, please [add your company here](https://github.com/alibaba/Sentinel/issues/18) to tell us your scenario to make Sentinel better :)
 
 ![Alibaba Group](https://docs.alibabagroup.com/assets2/images/en/global/logo_header.png)
+![AntFin](https://user-images.githubusercontent.com/9434884/90598732-30961c00-e226-11ea-8c86-0b1d7f7875c7.png)
 ![Taiping Renshou](http://www.cntaiping.com/tplresource/cms/www/taiping/img/home_new/tp_logo_img.png)
+![拼多多](http://cdn.pinduoduo.com/assets/img/pdd_logo_v3.png)
+![爱奇艺](https://user-images.githubusercontent.com/9434884/90598445-a51c8b00-e225-11ea-9327-3543525f3f2a.png)
 ![Shunfeng Technology](https://user-images.githubusercontent.com/9434884/48463502-2f48eb80-e817-11e8-984f-2f9b1b789e2d.png)
-![Mandao](https://user-images.githubusercontent.com/9434884/48463559-6cad7900-e817-11e8-87e4-42952b074837.png)
-![每日优鲜](https://home.missfresh.cn/statics/img/logo.png)
 ![二维火](https://user-images.githubusercontent.com/9434884/49358468-bc43de00-f70d-11e8-97fe-0bf05865f29f.png)
+![Mandao](https://user-images.githubusercontent.com/9434884/48463559-6cad7900-e817-11e8-87e4-42952b074837.png)
 ![文轩在线](http://static.winxuancdn.com/css/v2/images/logo.png)
 ![客如云](https://www.keruyun.com/static/krynew/images/logo.png)
 ![亲宝宝](https://stlib.qbb6.com/wclt/img/home_hd/version1/title_logo.png)
 ![杭州光云科技](https://www.raycloud.com/images/logo.png)
 ![金汇金融](https://res.jinhui365.com/r/images/logo2.png?v=1.527)
 ![闪电购](http://cdn.52shangou.com/shandianbang/official-source/3.1.1/build/images/logo.png)
-![拼多多](http://cdn.pinduoduo.com/assets/img/pdd_logo_v3.png)
+
