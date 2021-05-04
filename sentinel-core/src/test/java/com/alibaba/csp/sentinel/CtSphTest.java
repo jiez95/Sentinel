@@ -82,8 +82,6 @@ public class CtSphTest {
         } catch (Exception e) {
             entry.setError(e);
         } finally {
-            第二个资源访问
-                    /test -> /test/a
 //            if (entry != null) {
 //                entry.exit();
 //            }
