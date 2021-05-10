@@ -39,16 +39,40 @@ public final class InitExecutor {
      * The initialization will be executed only once.
      */
     public static void doInit() {
+        // 利用CAS，防并发初始化环境
         if (!initialized.compareAndSet(false, true)) {
             return;
         }
         try {
-            List<InitFunc> initFuncs = SpiLoader.of(InitFunc.class).loadInstanceListSorted();
+            List<InitFunc> initFuncs =
+                    SpiLoader
+                            /**
+                             * 以classFullName作为唯一标识缓存SpiLoader
+                             *  优先走缓存
+                             *  如果缓存不能命中，则new一个出来并加入缓存
+                             */
+                            .of(InitFunc.class)
+                            /**
+                             * 目标路径: /META-INF/services/serviceClassFullName
+                             * 利用classloader加载对应文件URL，
+                             *      然后根据URL读取文件内从，
+                             *      解析文件内容利用Class.forName进行加载
+                             *
+                             * 可以利用 注解-@Spi 来指定目标加载类的别名
+                             *
+                             * 每个SpiLoader实例都有一个类缓存，优先用指定别名，其次用类全限定名
+                             * 如果重复加载同一个类会报错
+                             *
+                             * 注解-@Spi 可以指定默认类，但只能指定一次，不然会报错
+                             */
+                            .loadInstanceListSorted();
             List<OrderWrapper> initList = new ArrayList<OrderWrapper>();
+            // 对InitFunc实现类进行排序
             for (InitFunc initFunc : initFuncs) {
                 RecordLog.info("[InitExecutor] Found init func: {}", initFunc.getClass().getCanonicalName());
                 insertSorted(initList, initFunc);
             }
+            // 遍历InitFunc实现类，执行init方法
             for (OrderWrapper w : initList) {
                 w.func.init();
                 RecordLog.info("[InitExecutor] Executing {} with order {}",
