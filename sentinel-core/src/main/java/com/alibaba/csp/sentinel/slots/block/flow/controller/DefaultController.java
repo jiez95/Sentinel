@@ -53,6 +53,7 @@ public class DefaultController implements TrafficShapingController {
                 long currentTime;
                 long waitInMs;
                 currentTime = TimeUtil.currentTimeMillis();
+                // 尝试占用未来时间窗
                 waitInMs = node.tryOccupyNext(currentTime, acquireCount, count);
                 if (waitInMs < OccupyTimeoutProperty.getOccupyTimeout()) {
                     node.addWaitingRequest(currentTime + waitInMs, acquireCount);

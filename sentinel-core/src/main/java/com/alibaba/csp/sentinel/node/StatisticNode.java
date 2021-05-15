@@ -15,16 +15,16 @@
  */
 package com.alibaba.csp.sentinel.node;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
-
 import com.alibaba.csp.sentinel.node.metric.MetricNode;
 import com.alibaba.csp.sentinel.slots.statistic.metric.ArrayMetric;
 import com.alibaba.csp.sentinel.slots.statistic.metric.Metric;
 import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.util.function.Predicate;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * <p>The statistic node keep three kinds of real-time statistics metrics:</p>
@@ -93,12 +93,18 @@ public class StatisticNode implements Node {
      * Holds statistics of the recent {@code INTERVAL} milliseconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
      */
+    /**
+     * 开两个格子，间隔1秒
+     */
     private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
         IntervalProperty.INTERVAL);
 
     /**
      * Holds statistics of the recent 60 seconds. The windowLengthInMs is deliberately set to 1000 milliseconds,
      * meaning each bucket per second, in this way we can get accurate statistics of each second.
+     */
+    /**
+     * 开60个格子，间隔60秒
      */
     private transient Metric rollingCounterInMinute = new ArrayMetric(60, 60 * 1000, false);
 

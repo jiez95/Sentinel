@@ -15,13 +15,13 @@
  */
 package com.alibaba.csp.sentinel.slots.statistic.base;
 
+import com.alibaba.csp.sentinel.util.AssertUtil;
+import com.alibaba.csp.sentinel.util.TimeUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.alibaba.csp.sentinel.util.AssertUtil;
-import com.alibaba.csp.sentinel.util.TimeUtil;
 
 /**
  * <p>
@@ -118,8 +118,22 @@ public abstract class LeapArray<T> {
             return null;
         }
 
+        /**
+         * 获取目标时间窗格的 集合下标
+         *
+         * (当前时间戳 / 时间窗间隔) % 时间窗格数
+         *
+         * 秒级别时间窗: 时间窗间隔: 1000ms, 格数: 2
+         * 分钟级别时间窗: 时间窗间隔 60000ms, 格数: 60
+         */
         int idx = calculateTimeIdx(timeMillis);
+
         // Calculate current bucket start time.
+        /**
+         * 获取目标时间窗格的 时间下标
+         *
+         * 当前时间戳 - （当前时间戳 取余 时间间隔）
+         */
         long windowStart = calculateWindowStart(timeMillis);
 
         /*
@@ -128,9 +142,34 @@ public abstract class LeapArray<T> {
          * (1) Bucket is absent, then just create a new bucket and CAS update to circular array.
          * (2) Bucket is up-to-date, then just return the bucket.
          * (3) Bucket is deprecated, then reset current bucket and clean all deprecated buckets.
+         *
+         *
+         * 时间窗是一个集合，里面有N个时间窗格(n是可以设置的),
+         *      -》 时间窗格里面有一个桶的概念(bucket), 都多个实现类
+         *          -》 桶（bucket）里面还有一个 计数器的概念(counter), 是一个数组
+         *              -》 数组下标是有定义的(在 MetricEvent)
+         *
+         *
+         * 现根据当前时间戳算出目标窗格
+         *  1. 目标时间窗格的 集合下标
+         *  2. 目标时间窗格的 时间下标
+         *
+         * 这里有四种情况:
+         * 1. 窗格未创建
+         * 2. 窗格已创建
+         *      2.1 当前窗格时间下标 等于 目标窗格时间下标
+         *          这种情况就直接使用当前窗格就可以了
+         *
+         *      2.2 当前窗格时间下标 小于 目标窗格时间下标
+         *          这种情况是当前时间窗格统计的时间段已经过了(统计维度是时间，每个窗格只能统计 指定间隔 的数据)，
+         *             那么需要覆盖当前窗格(重置当前窗格数据[时间/指标])然后返回
+         *
+         *      2.3 当前窗格时间下标 大于 目标窗格时间下标
+         *          这种情况是出现了时间回拨，异常处理是直接返回一个悬空的窗格，不纳入统计的
          */
         while (true) {
             WindowWrap<T> old = array.get(idx);
+            // 窗格未创建
             if (old == null) {
                 /*
                  *     B0       B1      B2    NULL      B4
@@ -152,7 +191,9 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart == old.windowStart()) {
+            }
+            // 当前窗格时间下标 等于 目标窗格时间下标
+            else if (windowStart == old.windowStart()) {
                 /*
                  *     B0       B1      B2     B3      B4
                  * ||_______|_______|_______|_______|_______||___
@@ -165,7 +206,9 @@ public abstract class LeapArray<T> {
                  * that means the time is within the bucket, so directly return the bucket.
                  */
                 return old;
-            } else if (windowStart > old.windowStart()) {
+            }
+            // 当前窗格时间下标 小于 目标窗格时间下标
+            else if (windowStart > old.windowStart()) {
                 /*
                  *   (old)
                  *             B0       B1      B2    NULL      B4
@@ -186,6 +229,19 @@ public abstract class LeapArray<T> {
                 if (updateLock.tryLock()) {
                     try {
                         // Successfully get the update lock, now we reset the bucket.
+                        /**
+                         * 返回重置后的窗格
+                         * 重置行为要看使用什么bucket
+                         *       OccupiableBucketLeapArray
+                         *          重置时间窗的时间下标
+                         *          重置counter里面所有数据
+                         *              然后把借用未来时间的指标 归还到对应未来窗格
+                         *                  （即 根据当前新窗格时间下标 判断 这个时间下标有没有被借用指标， 有的话就把借用的指标归还到这个窗格(addpass)）
+                         *
+                         *       BucketLeapArray
+                         *          重置时间窗的时间下标
+                         *          重置counter里面所有数据
+                         */
                         return resetWindowTo(old, windowStart);
                     } finally {
                         updateLock.unlock();
@@ -194,7 +250,9 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
-            } else if (windowStart < old.windowStart()) {
+            }
+            // 当前窗格时间下标 大于 目标窗格时间下标
+            else if (windowStart < old.windowStart()) {
                 // Should not go through here, as the provided time is already behind.
                 return new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
             }

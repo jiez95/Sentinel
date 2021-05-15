@@ -15,17 +15,17 @@
  */
 package com.alibaba.csp.sentinel.slots.statistic.metric;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.alibaba.csp.sentinel.config.SentinelConfig;
 import com.alibaba.csp.sentinel.node.metric.MetricNode;
 import com.alibaba.csp.sentinel.slots.statistic.MetricEvent;
 import com.alibaba.csp.sentinel.slots.statistic.base.LeapArray;
-import com.alibaba.csp.sentinel.slots.statistic.data.MetricBucket;
 import com.alibaba.csp.sentinel.slots.statistic.base.WindowWrap;
+import com.alibaba.csp.sentinel.slots.statistic.data.MetricBucket;
 import com.alibaba.csp.sentinel.slots.statistic.metric.occupy.OccupiableBucketLeapArray;
 import com.alibaba.csp.sentinel.util.function.Predicate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The basic metric class in Sentinel using a {@link BucketLeapArray} internal.
@@ -37,10 +37,21 @@ public class ArrayMetric implements Metric {
 
     private final LeapArray<MetricBucket> data;
 
+    /**
+     *
+     * @param sampleCount 时间窗窗格-格数
+     * @param intervalInMs 时间窗窗格格-间隔毫秒数
+     */
     public ArrayMetric(int sampleCount, int intervalInMs) {
         this.data = new OccupiableBucketLeapArray(sampleCount, intervalInMs);
     }
 
+    /**
+     *
+     * @param sampleCount 时间窗窗格-格数
+     * @param intervalInMs 时间窗窗格格-间隔毫秒数
+     * @param enableOccupy 是否允许占有未来时间窗
+     */
     public ArrayMetric(int sampleCount, int intervalInMs, boolean enableOccupy) {
         if (enableOccupy) {
             this.data = new OccupiableBucketLeapArray(sampleCount, intervalInMs);
@@ -241,7 +252,9 @@ public class ArrayMetric implements Metric {
 
     @Override
     public void addPass(int count) {
+        // 获取当前时间窗
         WindowWrap<MetricBucket> wrap = data.currentWindow();
+        // 添加窗格维护指标数据
         wrap.value().addPass(count);
     }
 
