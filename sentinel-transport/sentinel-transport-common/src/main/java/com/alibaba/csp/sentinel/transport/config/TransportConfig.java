@@ -34,6 +34,7 @@ public class TransportConfig {
 
     public static final String CONSOLE_SERVER = "csp.sentinel.dashboard.server";
     public static final String SERVER_PORT = "csp.sentinel.api.port";
+    public static final String SERVER_CONTEXT_PATH = "csp.sentinel.api.context.path";
     public static final String HEARTBEAT_INTERVAL_MS = "csp.sentinel.heartbeat.interval.ms";
     public static final String HEARTBEAT_CLIENT_IP = "csp.sentinel.heartbeat.client.ip";
     public static final String HEARTBEAT_API_PATH = "csp.sentinel.heartbeat.api.path";
@@ -141,6 +142,19 @@ public class TransportConfig {
             return String.valueOf(runtimePort);
         }
         return SentinelConfig.getConfig(SERVER_PORT);
+    }
+
+    /**
+     * Get Server context path of this HTTP server.
+     *
+     * @return the port, maybe null if not configured.
+     */
+    public static String getContextPath() {
+        String contextPath = SentinelConfig.getConfig(SERVER_CONTEXT_PATH);
+        if (StringUtil.isBlank(contextPath)) {
+            return "";
+        }
+        return contextPath;
     }
 
     /**

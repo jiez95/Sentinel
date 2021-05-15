@@ -19,6 +19,7 @@ import com.alibaba.csp.sentinel.command.CommandHandler;
 import com.alibaba.csp.sentinel.command.CommandRequest;
 import com.alibaba.csp.sentinel.command.CommandResponse;
 import com.alibaba.csp.sentinel.config.SentinelConfig;
+import com.alibaba.csp.sentinel.transport.config.TransportConfig;
 import com.alibaba.csp.sentinel.transport.log.CommandCenterLog;
 import com.alibaba.csp.sentinel.transport.command.SimpleHttpCommandCenter;
 import com.alibaba.csp.sentinel.transport.command.exception.RequestException;
@@ -39,6 +40,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The task handles incoming command request in HTTP protocol.
@@ -53,6 +55,8 @@ public class HttpEventTask implements Runnable {
     public static final String INVALID_COMMAND_MESSAGE = "Invalid command";
 
     private final Socket socket;
+
+    private static volatile String SERVER_CONTEXT_PATH = null;
 
     private boolean writtenHead = false;
 
@@ -341,6 +345,12 @@ public class HttpEventTask implements Runnable {
         CommandRequest request = new CommandRequest();
         if (StringUtil.isBlank(line)) {
             return request;
+        }
+        if (HttpEventTask.SERVER_CONTEXT_PATH == null) {
+            HttpEventTask.SERVER_CONTEXT_PATH = TransportConfig.getContextPath();
+        }
+        if (line.contains(HttpEventTask.SERVER_CONTEXT_PATH)) {
+            line = line.replaceAll(HttpEventTask.SERVER_CONTEXT_PATH, "");
         }
         int start = line.indexOf('/');
         int ask = line.indexOf('?') == -1 ? line.lastIndexOf(' ') : line.indexOf('?');
