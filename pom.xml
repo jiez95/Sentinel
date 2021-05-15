@@ -72,7 +72,7 @@
         <module>sentinel-extension</module>
         <module>sentinel-transport</module>
         <module>sentinel-adapter</module>
-        <module>sentinel-cluster</module>
+<!--        <module>sentinel-cluster</module>-->
         <module>sentinel-logging</module>
 
         <module>sentinel-dashboard</module>
