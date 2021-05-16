@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.banggood.crm</groupId>
+    <groupId>com.sentinel.customization</groupId>
     <artifactId>sentinel-transport-simple-http</artifactId>
     <version>0.0.2</version>
     <packaging>jar</packaging>
@@ -25,7 +25,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.banggood.crm</groupId>
+            <groupId>com.sentinel.customization</groupId>
             <artifactId>sentinel-transport-common</artifactId>
             <version>${sentinnel-transport-common}</version>
         </dependency>

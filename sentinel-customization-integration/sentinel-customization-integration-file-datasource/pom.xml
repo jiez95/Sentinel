@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>sentinel-customization-integration</artifactId>
+        <groupId>com.alibaba.csp</groupId>
+        <version>1.8.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>sentinel-customization-integration-file-datasource</artifactId>
+
+    <name>sentinel-customization-integration-file-datasource</name>
+
+    <properties>
+        <sentinel-transport-common-version>0.0.2</sentinel-transport-common-version>
+        <alibaba-sentinel-base-version>1.8.1</alibaba-sentinel-base-version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sentinel.customization</groupId>
+            <artifactId>sentinel-transport-common</artifactId>
+            <version>${sentinel-transport-common-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-datasource-extension</artifactId>
+            <version>${alibaba-sentinel-base-version}</version>
+        </dependency>
+    </dependencies>
+
+</project>
