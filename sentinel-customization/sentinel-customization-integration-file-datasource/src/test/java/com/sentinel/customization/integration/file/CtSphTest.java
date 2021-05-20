@@ -55,7 +55,7 @@ public class CtSphTest {
             e.printStackTrace();
             entry.exit();
         }
-//        updateFlowRules();
+        updateFlowRules();
 
         while (true) {
             System.out.println(JSONObject.toJSONString(FlowRuleManager.getRules()));
