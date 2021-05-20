@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>sentinel-customization-api-call</artifactId>
+        <groupId>com.alibaba.csp</groupId>
+        <version>1.8.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>sentinel-customizetion-api-call-common</artifactId>
+
+    <properties>
+        <fastjson.version>1.2.75</fastjson.version>
+        <sentinel.core.version>1.8.1</sentinel.core.version>
+        <customizetion.api.call.common.version>1.8.1</customizetion.api.call.common.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-core</artifactId>
+            <version>${sentinel.core.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>

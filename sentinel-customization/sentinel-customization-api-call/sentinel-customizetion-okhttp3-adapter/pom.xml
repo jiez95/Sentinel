@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>sentinel-customization</artifactId>
+        <groupId>com.alibaba.csp</groupId>
+        <version>1.8.1</version>
+    </parent>
+
+    <artifactId>sentinel-customizetion-okhttp3-adapter</artifactId>
+    <modelVersion>4.0.0</modelVersion>
+
+    <properties>
+        <customizetion.api.call.common.version>1.8.1</customizetion.api.call.common.version>
+        <okhttp3.version>3.6.0</okhttp3.version>
+        <apache.common.lang3.version>3.8.1</apache.common.lang3.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-customizetion-api-call-common</artifactId>
+            <version>${customizetion.api.call.common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp3.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache.common.lang3.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>
