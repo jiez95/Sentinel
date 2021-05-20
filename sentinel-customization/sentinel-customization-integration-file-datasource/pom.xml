@@ -16,6 +16,7 @@
     <properties>
         <sentinel-transport-common-version>0.0.2</sentinel-transport-common-version>
         <alibaba-sentinel-base-version>1.8.1</alibaba-sentinel-base-version>
+        <fastjson.version>1.2.75</fastjson.version>
     </properties>
 
     <dependencies>
@@ -29,6 +30,12 @@
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-datasource-extension</artifactId>
             <version>${alibaba-sentinel-base-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
         </dependency>
     </dependencies>
 
