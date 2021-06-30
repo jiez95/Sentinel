@@ -25,6 +25,7 @@ import com.alibaba.csp.sentinel.spi.Spi;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.function.Function;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -179,9 +180,20 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     private final Function<String, Collection<FlowRule>> ruleProvider = new Function<String, Collection<FlowRule>>() {
         @Override
         public Collection<FlowRule> apply(String resource) {
-            // Flow rule map should not be null.
+
+            List<FlowRule> rules = new ArrayList<>();
+            /**
+             * 整合规则
+             * 1. 普通规则直接用资源名字匹配
+             * 2. 全局规则支持使用正则匹配(加规则)
+             */
             Map<String, List<FlowRule>> flowRules = FlowRuleManager.getFlowRuleMap();
-            return flowRules.get(resource);
+            rules.addAll(flowRules.get(resource));
+            Map<String, List<FlowRule>> globalFlowRuleMap = FlowRuleManager.getGlobalFlowRuleMap();
+            for (Map.Entry<String, List<FlowRule>> globalFlowRuleEntry : globalFlowRuleMap.entrySet()) {
+                rules.addAll(flowRules.get(globalFlowRuleEntry.getValue()));
+            }
+            return rules;
         }
     };
 }

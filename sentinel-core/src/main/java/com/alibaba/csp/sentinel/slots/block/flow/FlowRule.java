@@ -46,6 +46,13 @@ public class FlowRule extends AbstractRule {
         setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
     }
 
+    public FlowRule(String resourceName, boolean globalMode) {
+        super();
+        setResource(resourceName);
+        setGlobalMode(globalMode);
+        setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
+    }
+
     /**
      * The threshold type of flow control (0: thread count, 1: QPS).
      */
@@ -223,18 +230,19 @@ public class FlowRule extends AbstractRule {
     @Override
     public String toString() {
         return "FlowRule{" +
-            "resource=" + getResource() +
-            ", limitApp=" + getLimitApp() +
-            ", grade=" + grade +
-            ", count=" + count +
-            ", strategy=" + strategy +
-            ", refResource=" + refResource +
-            ", controlBehavior=" + controlBehavior +
-            ", warmUpPeriodSec=" + warmUpPeriodSec +
-            ", maxQueueingTimeMs=" + maxQueueingTimeMs +
-            ", clusterMode=" + clusterMode +
-            ", clusterConfig=" + clusterConfig +
-            ", controller=" + controller +
-            '}';
+                "resource=" + getResource() +
+                ", limitApp=" + getLimitApp() +
+                ", grade=" + grade +
+                ", count=" + count +
+                ", strategy=" + strategy +
+                ", refResource=" + refResource +
+                ", controlBehavior=" + controlBehavior +
+                ", warmUpPeriodSec=" + warmUpPeriodSec +
+                ", maxQueueingTimeMs=" + maxQueueingTimeMs +
+                ", clusterMode=" + clusterMode +
+                ", clusterConfig=" + clusterConfig +
+                ", controller=" + controller +
+                ", effectiveGlobally=" + isGlobalMode() +
+                '}';
     }
 }

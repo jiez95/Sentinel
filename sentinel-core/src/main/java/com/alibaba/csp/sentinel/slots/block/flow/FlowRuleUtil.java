@@ -36,13 +36,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FlowRuleUtil {
 
+    public static final String NORMAL_FLOW_RULE = "normal_flow_rule";
+
+    public static final String GLOBAL_FLOW_RULE = "global_flow_rule";
+
     /**
      * Build the flow rule map from raw list of flow rules, grouping by resource name.
      *
      * @param list raw list of flow rules
      * @return constructed new flow rule map; empty map if list is null or empty, or no valid rules
      */
-    public static Map<String, List<FlowRule>> buildFlowRuleMap(List<FlowRule> list) {
+    public static Map<String, Map<String, List<FlowRule>>> buildFlowRuleMap(List<FlowRule> list) {
         return buildFlowRuleMap(list, null);
     }
 
@@ -53,7 +57,7 @@ public final class FlowRuleUtil {
      * @param filter rule filter
      * @return constructed new flow rule map; empty map if list is null or empty, or no wanted rules
      */
-    public static Map<String, List<FlowRule>> buildFlowRuleMap(List<FlowRule> list, Predicate<FlowRule> filter) {
+    public static Map<String, Map<String, List<FlowRule>>> buildFlowRuleMap(List<FlowRule> list, Predicate<FlowRule> filter) {
         return buildFlowRuleMap(list, filter, true);
     }
 
@@ -65,32 +69,39 @@ public final class FlowRuleUtil {
      * @param shouldSort whether the rules should be sorted
      * @return constructed new flow rule map; empty map if list is null or empty, or no wanted rules
      */
-    public static Map<String, List<FlowRule>> buildFlowRuleMap(List<FlowRule> list, Predicate<FlowRule> filter,
-                                                               boolean shouldSort) {
-        return buildFlowRuleMap(list, extractResource, filter, shouldSort);
+    public static Map<String, Map<String, List<FlowRule>>> buildFlowRuleMap(List<FlowRule> list, Predicate<FlowRule> filter,
+                                                                            boolean shouldSort) {
+        return buildFlowRuleMap(list, extractResource, defaultRuleLocator, filter, shouldSort);
     }
 
     /**
      * Build the flow rule map from raw list of flow rules, grouping by provided group function.
      *
      * @param list          raw list of flow rules
-     * @param groupFunction grouping function of the map (by key)
+     * @param groupFunction grouping function of the second map (by key)
+     * @param ruleLocator   locate rule property, grouping function of the first map (by key)
      * @param filter        rule filter
      * @param shouldSort    whether the rules should be sorted
-     * @param <K>           type of key
+     * @param <K>           type of second map key
+     * @param <T>           type of first map key
      * @return constructed new flow rule map; empty map if list is null or empty, or no wanted rules
      */
-    public static <K> Map<K, List<FlowRule>> buildFlowRuleMap(List<FlowRule> list, Function<FlowRule, K> groupFunction,
-                                                              Predicate<FlowRule> filter, boolean shouldSort) {
-        Map<K, List<FlowRule>> newRuleMap = new ConcurrentHashMap<>();
+    public static <T, K> Map<T, Map<K, List<FlowRule>>> buildFlowRuleMap(List<FlowRule> list, Function<FlowRule, K> groupFunction,
+                                                                         Function<FlowRule, T> ruleLocator, Predicate<FlowRule> filter,
+                                                                         boolean shouldSort) {
+        Map<T, Map<K, List<FlowRule>>> newRuleMap = new ConcurrentHashMap<>();
         if (list == null || list.isEmpty()) {
             return newRuleMap;
         }
-        Map<K, Set<FlowRule>> tmpMap = new ConcurrentHashMap<>();
+        Map<T, Map<K, Set<FlowRule>>> tmpMap = new ConcurrentHashMap<>();
 
         for (FlowRule rule : list) {
             if (!isValidRule(rule)) {
                 RecordLog.warn("[FlowRuleManager] Ignoring invalid flow rule when loading new flow rules: " + rule);
+                continue;
+            }
+            // Global mode does not support cluster configuration at present
+            if (!checkGlobalConfig(rule)) {
                 continue;
             }
             if (filter != null && !filter.test(rule)) {
@@ -102,28 +113,45 @@ public final class FlowRuleUtil {
             TrafficShapingController rater = generateRater(rule);
             rule.setRater(rater);
 
-            K key = groupFunction.apply(rule);
-            if (key == null) {
+            T firstMapKey = ruleLocator.apply(rule);
+            if (firstMapKey == null) {
                 continue;
             }
-            Set<FlowRule> flowRules = tmpMap.get(key);
 
+            Map<K, Set<FlowRule>> ruleLocationMap = tmpMap.get(firstMapKey);
+            if (Objects.isNull(ruleLocationMap)) {
+                ruleLocationMap = new HashMap<>();
+                tmpMap.put(firstMapKey, ruleLocationMap);
+            }
+
+            K secondMapKey = groupFunction.apply(rule);
+            if (secondMapKey == null) {
+                continue;
+            }
+
+            Set<FlowRule> flowRules = ruleLocationMap.get(secondMapKey);
             if (flowRules == null) {
                 // Use hash set here to remove duplicate rules.
                 flowRules = new HashSet<>();
-                tmpMap.put(key, flowRules);
+                ruleLocationMap.put(secondMapKey, flowRules);
             }
 
             flowRules.add(rule);
         }
+
         Comparator<FlowRule> comparator = new FlowRuleComparator();
-        for (Entry<K, Set<FlowRule>> entries : tmpMap.entrySet()) {
-            List<FlowRule> rules = new ArrayList<>(entries.getValue());
-            if (shouldSort) {
-                // Sort the rules.
-                Collections.sort(rules, comparator);
+
+        for (Entry<T, Map<K, Set<FlowRule>>> firstMapEntries : tmpMap.entrySet()) {
+            Map<K, List<FlowRule>> newFirstMap = new HashMap<>();
+            for (Entry<K, Set<FlowRule>> secondMapEntries : firstMapEntries.getValue().entrySet()) {
+                List<FlowRule> rules = new ArrayList<>(secondMapEntries.getValue());
+                if (shouldSort) {
+                    // Sort the rules.
+                    Collections.sort(rules, comparator);
+                }
+                newFirstMap.put(secondMapEntries.getKey(), rules);
             }
-            newRuleMap.put(entries.getKey(), rules);
+            newRuleMap.put(firstMapEntries.getKey(), newFirstMap);
         }
 
         return newRuleMap;
@@ -250,10 +278,29 @@ public final class FlowRuleUtil {
         }
     }
 
+    private static boolean checkGlobalConfig(/*@NonNull*/ FlowRule rule) {
+        // 暂不支持集群模式
+        if (rule.isGlobalMode() && rule.isClusterMode()) {
+            return false;
+        }
+        return true;
+    }
+
     private static final Function<FlowRule, String> extractResource = new Function<FlowRule, String>() {
         @Override
         public String apply(FlowRule rule) {
             return rule.getResource();
+        }
+    };
+
+    private static final Function<FlowRule, String> defaultRuleLocator = new Function<FlowRule, String>() {
+        @Override
+        public String apply(FlowRule flowRule) {
+            if (flowRule.isGlobalMode()) {
+                return GLOBAL_FLOW_RULE;
+            }
+
+            return NORMAL_FLOW_RULE;
         }
     };
 

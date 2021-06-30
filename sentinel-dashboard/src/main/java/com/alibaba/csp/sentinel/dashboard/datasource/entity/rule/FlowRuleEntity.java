@@ -31,6 +31,7 @@ public class FlowRuleEntity implements RuleEntity {
     private Integer port;
     private String limitApp;
     private String resource;
+    private boolean globalMode;
     /**
      * 0为线程数;1为qps
      */
@@ -67,6 +68,7 @@ public class FlowRuleEntity implements RuleEntity {
         entity.setPort(port);
         entity.setLimitApp(rule.getLimitApp());
         entity.setResource(rule.getResource());
+        entity.setGlobalMode(rule.isGlobalMode());
         entity.setGrade(rule.getGrade());
         entity.setCount(rule.getCount());
         entity.setStrategy(rule.getStrategy());
@@ -130,6 +132,14 @@ public class FlowRuleEntity implements RuleEntity {
 
     public void setResource(String resource) {
         this.resource = resource;
+    }
+
+    public boolean isGlobalMode() {
+        return globalMode;
+    }
+
+    public void setGlobalMode(boolean globalMode) {
+        this.globalMode = globalMode;
     }
 
     public Integer getGrade() {
@@ -229,6 +239,7 @@ public class FlowRuleEntity implements RuleEntity {
         flowRule.setCount(this.count);
         flowRule.setGrade(this.grade);
         flowRule.setResource(this.resource);
+        flowRule.setGlobalMode(this.globalMode);
         flowRule.setLimitApp(this.limitApp);
         flowRule.setRefResource(this.refResource);
         flowRule.setStrategy(this.strategy);
