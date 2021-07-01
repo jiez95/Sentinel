@@ -69,8 +69,9 @@ public abstract class AbstractRule implements Rule {
         return globalMode;
     }
 
-    public void setGlobalMode(boolean globalMode) {
+    public AbstractRule setGlobalMode(boolean globalMode) {
         this.globalMode = globalMode;
+        return this;
     }
 
     @Override
