@@ -15,10 +15,7 @@
  */
 package com.alibaba.csp.sentinel.slots.block.flow;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -54,6 +51,8 @@ public class FlowRuleManager {
 
     private static final AtomicReference<Map<String, List<FlowRule>>> GLOBAL_FLOW_RULES = new AtomicReference<Map<String, List<FlowRule>>>();
 
+    private static final Map<String, List<FlowRule>> DEFAULT_EMPTY_MAP = Collections.<String, List<FlowRule>>emptyMap();
+
     private static final FlowPropertyListener LISTENER = new FlowPropertyListener();
     private static SentinelProperty<List<FlowRule>> currentProperty = new DynamicSentinelProperty<List<FlowRule>>();
 
@@ -62,8 +61,8 @@ public class FlowRuleManager {
         new NamedThreadFactory("sentinel-metrics-record-task", true));
 
     static {
-        NORMAIL_FLOW_RULES.set(Collections.<String, List<FlowRule>>emptyMap());
-        GLOBAL_FLOW_RULES.set(Collections.<String, List<FlowRule>>emptyMap());
+        NORMAIL_FLOW_RULES.set(DEFAULT_EMPTY_MAP);
+        GLOBAL_FLOW_RULES.set(DEFAULT_EMPTY_MAP);
         currentProperty.addListener(LISTENER);
         startMetricTimerListener();
     }
@@ -116,6 +115,20 @@ public class FlowRuleManager {
         }
         return rules;
     }
+
+    /**
+     * Get a copy of the rules.
+     *
+     * @return a new copy of the rules.
+     */
+    public static List<FlowRule> getGlobalRules() {
+        List<FlowRule> rules = new ArrayList<FlowRule>();
+        for (Map.Entry<String, List<FlowRule>> entry : GLOBAL_FLOW_RULES.get().entrySet()) {
+            rules.addAll(entry.getValue());
+        }
+        return rules;
+    }
+
 
     /**
      * Load {@link FlowRule}s, former rules will be replaced.
@@ -175,12 +188,16 @@ public class FlowRuleManager {
         private void flowRuleUpdateInMemory(Map<String, Map<String, List<FlowRule>>> rules) {
             for (Map.Entry<String, Map<String, List<FlowRule>>> rule : rules.entrySet()) {
                 String ruleLocation = rule.getKey();
+                Map<String, List<FlowRule>> rulesMap = rule.getValue();
+                if (Objects.isNull(rulesMap)) {
+                    rulesMap = DEFAULT_EMPTY_MAP;
+                }
                 switch (ruleLocation) {
                     case FlowRuleUtil.NORMAL_FLOW_RULE:
-                        NORMAIL_FLOW_RULES.set(rule.getValue());
+                        NORMAIL_FLOW_RULES.set(rulesMap);
                         break;
                     case FlowRuleUtil.GLOBAL_FLOW_RULE:
-                        GLOBAL_FLOW_RULES.set(rule.getValue());
+                        GLOBAL_FLOW_RULES.set(rulesMap);
                         break;
                     default:
                         break;

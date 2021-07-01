@@ -25,10 +25,7 @@ import com.alibaba.csp.sentinel.spi.Spi;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.function.Function;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -185,13 +182,21 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             /**
              * 整合规则
              * 1. 普通规则直接用资源名字匹配
-             * 2. 全局规则支持使用正则匹配(加规则)
+             * 2. 全局规则
              */
-            Map<String, List<FlowRule>> flowRules = FlowRuleManager.getFlowRuleMap();
-            rules.addAll(flowRules.get(resource));
+            Map<String, List<FlowRule>> normalFlowRuleMap = FlowRuleManager.getFlowRuleMap();
+            List<FlowRule> normalRules = normalFlowRuleMap.get(resource);
+            if (Objects.nonNull(normalRules) && normalRules.size() > 0) {
+                rules.addAll(normalRules);
+            }
+
             Map<String, List<FlowRule>> globalFlowRuleMap = FlowRuleManager.getGlobalFlowRuleMap();
             for (Map.Entry<String, List<FlowRule>> globalFlowRuleEntry : globalFlowRuleMap.entrySet()) {
-                rules.addAll(flowRules.get(globalFlowRuleEntry.getValue()));
+                List<FlowRule> globalFlowRules = globalFlowRuleEntry.getValue();
+                if (Objects.nonNull(globalFlowRules) && globalFlowRules.size() > 0) {
+                    // 这里可以加正则适配
+                    rules.addAll(globalFlowRules);
+                }
             }
             return rules;
         }
