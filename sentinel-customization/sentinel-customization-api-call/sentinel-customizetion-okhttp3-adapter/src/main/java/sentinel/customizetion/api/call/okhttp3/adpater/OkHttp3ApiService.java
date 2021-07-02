@@ -4,6 +4,7 @@ package sentinel.customizetion.api.call.okhttp3.adpater;
 import jdk.nashorn.internal.ir.Assignment;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
+import sentinel.customizetion.api.call.common.domian.ApiCallResultCode;
 import sentinel.customizetion.api.call.common.domian.HttpParam;
 import sentinel.customizetion.api.call.common.domian.HttpResult;
 
@@ -206,12 +207,16 @@ public class OkHttp3ApiService {
      * @return
      */
     private HttpResult doCallApi(Request request) throws IOException {
-        Call call = okHttpClient.newCall(request);
-        Response response = call.execute();
-        String bodyMsg = response.body().string();
-        if (response.isSuccessful()) {
-            return HttpResult.success(response.message(), bodyMsg);
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            String bodyMsg = response.body().string();
+            if (response.isSuccessful()) {
+                return HttpResult.success(response.message(), bodyMsg);
+            }
+            return new HttpResult(response.code(), response.message(), bodyMsg, false);
+        } catch (SocketTimeoutException timeoutException) {
+            return new HttpResult(ApiCallResultCode.ApiCallErrorCode.TIMEOUT.getCode(), ApiCallResultCode.ApiCallErrorCode.TIMEOUT.getMessage(), null, false);
+        } catch (IOException ioException) {
+            return new HttpResult(ApiCallResultCode.ApiCallErrorCode.IO_ERROR.getCode(), ApiCallResultCode.ApiCallErrorCode.IO_ERROR.getMessage(), null, false);
         }
-        return new HttpResult(response.code(), response.message(), bodyMsg, false);
     }
 }
