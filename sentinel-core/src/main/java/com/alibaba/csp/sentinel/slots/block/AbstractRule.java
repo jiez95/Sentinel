@@ -42,7 +42,7 @@ public abstract class AbstractRule implements Rule {
     private String limitApp;
 
     /**
-     *
+     * 全局配置
      */
     private boolean globalMode;
 

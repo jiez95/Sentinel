@@ -15,12 +15,7 @@
  */
 package com.alibaba.csp.sentinel.slots.block.degrade;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.property.DynamicSentinelProperty;
@@ -204,18 +199,7 @@ public final class DegradeRuleManager {
     private static class RulePropertyListener implements PropertyListener<List<DegradeRule>> {
 
         private synchronized void reloadFrom(List<DegradeRule> list) {
-            Map<String, List<CircuitBreaker>> cbs = buildCircuitBreakers(list);
-            Map<String, Set<DegradeRule>> rm = new HashMap<>(cbs.size());
-
-            for (Map.Entry<String, List<CircuitBreaker>> e : cbs.entrySet()) {
-                assert e.getValue() != null && !e.getValue().isEmpty();
-
-                Set<DegradeRule> rules = new HashSet<>(e.getValue().size());
-                for (CircuitBreaker cb : e.getValue()) {
-                    rules.add(cb.getRule());
-                }
-                rm.put(e.getKey(), rules);
-            }
+            Map<String, Map<String, List<CircuitBreaker>>> cbs = buildCircuitBreakers(list);
 
             DegradeRuleManager.circuitBreakers = cbs;
             DegradeRuleManager.ruleMap = rm;
@@ -233,11 +217,25 @@ public final class DegradeRuleManager {
             RecordLog.info("[DegradeRuleManager] Degrade rules loaded: {}", ruleMap);
         }
 
-        private Map<String, List<CircuitBreaker>> buildCircuitBreakers(List<DegradeRule> list) {
-            Map<String, List<CircuitBreaker>> cbMap = new HashMap<>(8);
+        private Map<String, Map<String, List<CircuitBreaker>>> buildCircuitBreakers(List<DegradeRule> list) {
+            /**
+             * 目前就两种类型的规则
+             */
+            Map<String, Map<String, List<CircuitBreaker>>> cbMap = new HashMap<>(2);
+
+            Map<String, List<CircuitBreaker>> normalCbMap = new HashMap<>(8);
+            Map<String, List<CircuitBreaker>> globalCbMap = new HashMap<>(8);
+
+            cbMap.put(RuleConstant.RULE_NORMAL, normalCbMap);
+            cbMap.put(RuleConstant.RULE_GLOBAL, globalCbMap);
+
             if (list == null || list.isEmpty()) {
                 return cbMap;
             }
+
+            Map<String, Set<CircuitBreaker>> normalCbMapTemp = new HashMap<>(8);
+            Map<String, Set<CircuitBreaker>> globalCbMapTemp = new HashMap<>(8);
+
             for (DegradeRule rule : list) {
                 if (!isValidRule(rule)) {
                     RecordLog.warn("[DegradeRuleManager] Ignoring invalid rule when loading new rules: {}", rule);
@@ -247,6 +245,7 @@ public final class DegradeRuleManager {
                 if (StringUtil.isBlank(rule.getLimitApp())) {
                     rule.setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
                 }
+
                 CircuitBreaker cb = getExistingSameCbOrNew(rule);
                 if (cb == null) {
                     RecordLog.warn("[DegradeRuleManager] Unknown circuit breaking strategy, ignoring: {}", rule);
@@ -255,13 +254,36 @@ public final class DegradeRuleManager {
 
                 String resourceName = rule.getResource();
 
-                List<CircuitBreaker> cbList = cbMap.get(resourceName);
-                if (cbList == null) {
-                    cbList = new ArrayList<>();
-                    cbMap.put(resourceName, cbList);
+                // 处理全局配置断路器
+                if (rule.isGlobalMode()) {
+                    Set<CircuitBreaker> globalCbList = normalCbMapTemp.get(rule);
+                    if (globalCbList == null) {
+                        globalCbList = new HashSet<>();
+                        globalCbMapTemp.put(resourceName, globalCbList);
+                    }
+                    globalCbList.add(cb);
                 }
-                cbList.add(cb);
+
+                Set<CircuitBreaker> normalCbList = normalCbMapTemp.get(resourceName);
+                if (normalCbList == null) {
+                    normalCbList = new HashSet<>();
+                    normalCbMapTemp.put(resourceName, normalCbList);
+                }
+                normalCbList.add(cb);
             }
+
+            for (Map.Entry<String, Set<CircuitBreaker>> map : normalCbMapTemp.entrySet()) {
+                if (!StringUtil.isBlank(map.getKey()) && Objects.nonNull(map.getValue()) && map.getValue().size() > 0) {
+                    normalCbMap.put(map.getKey(), new ArrayList<>(map.getValue()));
+                }
+            }
+
+            for (Map.Entry<String, Set<CircuitBreaker>> map : globalCbMapTemp.entrySet()) {
+                if (!StringUtil.isBlank(map.getKey()) && Objects.nonNull(map.getValue()) && map.getValue().size() > 0) {
+                    globalCbMap.put(map.getKey(), new ArrayList<>(map.getValue()));
+                }
+            }
+
             return cbMap;
         }
     }

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.alibaba.csp.sentinel.concurrent.NamedThreadFactory;
 import com.alibaba.csp.sentinel.config.SentinelConfig;
 import com.alibaba.csp.sentinel.log.RecordLog;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.csp.sentinel.node.metric.MetricTimerListener;
@@ -193,10 +194,10 @@ public class FlowRuleManager {
                     rulesMap = DEFAULT_EMPTY_MAP;
                 }
                 switch (ruleLocation) {
-                    case FlowRuleUtil.NORMAL_FLOW_RULE:
+                    case RuleConstant.RULE_NORMAL:
                         NORMAIL_FLOW_RULES.set(rulesMap);
                         break;
-                    case FlowRuleUtil.GLOBAL_FLOW_RULE:
+                    case RuleConstant.RULE_GLOBAL:
                         GLOBAL_FLOW_RULES.set(rulesMap);
                         break;
                     default:

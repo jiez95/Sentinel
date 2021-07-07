@@ -36,10 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FlowRuleUtil {
 
-    public static final String NORMAL_FLOW_RULE = "normal_flow_rule";
-
-    public static final String GLOBAL_FLOW_RULE = "global_flow_rule";
-
     /**
      * Build the flow rule map from raw list of flow rules, grouping by resource name.
      *
@@ -297,10 +293,10 @@ public final class FlowRuleUtil {
         @Override
         public String apply(FlowRule flowRule) {
             if (flowRule.isGlobalMode()) {
-                return GLOBAL_FLOW_RULE;
+                return RuleConstant.RULE_GLOBAL;
             }
 
-            return NORMAL_FLOW_RULE;
+            return RuleConstant.RULE_NORMAL;
         }
     };
 
